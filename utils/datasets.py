@@ -364,7 +364,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
 
         # Define labels
         sa, sb = os.sep + 'images' + os.sep, os.sep + 'labels' + os.sep  # /images/, /labels/ substrings
-        self.label_files = [sb.join(x.rsplit(sa, 1)).replace(os.path.splitext(x)[-1], '.txt') for x in self.img_files]
+        self.label_files = [x.replace(sa, sb, 1).replace(os.path.splitext(x)[-1], '.txt') for x in self.img_files]
 
         # Check cache
         cache_path = str(Path(self.label_files[0]).parent) + '.cache'  # cached labels
@@ -516,7 +516,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             index = self.indices[index]
 
         hyp = self.hyp
-        if self.mosaic:
+        mosaic = self.mosaic and random.random() < hyp['mosaic']
+        if mosaic:
             # Load mosaic
             img, labels = load_mosaic(self, index)
             shapes = None
@@ -550,7 +551,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
 
         if self.augment:
             # Augment imagespace
-            if not self.mosaic:
+            if not mosaic:
                 img, labels = random_perspective(img, labels,
                                                  degrees=hyp['degrees'],
                                                  translate=hyp['translate'],
