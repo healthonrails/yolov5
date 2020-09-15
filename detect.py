@@ -20,7 +20,7 @@ from .utils.torch_utils import select_device, load_classifier, time_synchronized
 
 tracker = build_tracker()
 
-def detect(opt,save_img=False):
+def detect(opt,save_img=False,tracking=True):
     out, source, weights, view_img, save_txt, imgsz = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
     webcam = source.isnumeric() or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
@@ -102,14 +102,14 @@ def detect(opt,save_img=False):
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
 
-                if True:
+                if tracking:
                     xywh = xyxy2xywh((det[:, :4]).cpu().numpy())
                     conf = (det[:,-2]).cpu().numpy()
                     outputs = tracker.update(xywh, conf , im0)
-                if len(outputs) > 0:
-                    bbox_xyxy = outputs[:, :4]
-                    identities = outputs[:, -1]
-                    im0 = draw_boxes(im0, bbox_xyxy, identities)
+                    if len(outputs) > 0:
+                        bbox_xyxy = outputs[:, :4]
+                        identities = outputs[:, -1]
+                        im0 = draw_boxes(im0, bbox_xyxy, identities)
 
                 for *xyxy, conf, cls in reversed(det):  
                     if save_txt:  # Write to file
@@ -119,7 +119,12 @@ def detect(opt,save_img=False):
 
                     if save_img or view_img:  # Add bbox to image
                         label = f"{names[int(cls)]}:{conf: .2f}"
-                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
+                        plot_one_box(xyxy, im0, 
+                        label=label,
+                        color=colors[int(cls)], 
+                        line_thickness=3,
+                        tracking=tracking
+                        )
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
